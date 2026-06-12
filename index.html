@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Неоморфные заметки | Просмотр и детали</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #e0e5ec;
+            padding: 2rem 1.5rem;
+            transition: all 0.2s;
+        }
+
+        /* основной контейнер */
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* неоморфная карточка заголовка */
+        .neo-header {
+            background: #e0e5ec;
+            border-radius: 48px;
+            padding: 1.8rem 2rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 9px 9px 16px rgba(163, 177, 198, 0.6),
+                        -9px -9px 16px rgba(255, 255, 255, 0.5);
+            transition: all 0.2s ease;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #2c3e66, #1a2a44);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+
+        .sub {
+            color: #5b6e8c;
+            margin-top: 0.5rem;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        /* панель действий */
+        .action-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+            margin-bottom: 3rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .input-group {
+            flex: 2;
+            min-width: 220px;
+        }
+
+        .neo-input {
+            width: 100%;
+            background: #e0e5ec;
+            border: none;
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 60px;
+            box-shadow: inset 5px 5px 12px rgba(163, 177, 198, 0.4),
+                        inset -5px -5px 12px rgba(255, 255, 255, 0.6),
+                        2px 2px 4px rgba(163, 177, 198, 0.2);
+            outline: none;
+            transition: all 0.2s;
+            color: #1e2a3e;
+            font-weight: 500;
+        }
+
+        .neo-input:focus {
+            box-shadow: inset 3px 3px 8px rgba(163, 177, 198, 0.6),
+                        inset -3px -3px 8px rgba(255, 255, 255, 0.8);
+        }
+
+        .neo-btn {
+            background: #e0e5ec;
+            border: none;
+            padding: 0.9rem 1.8rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #2c3e66;
+            cursor: pointer;
+            box-shadow: 6px 6px 12px rgba(163, 177, 198, 0.5),
+                        -4px -4px 10px rgba(255, 255, 255, 0.6);
+            transition: all 0.15s linear;
+            letter-spacing: 0.3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .neo-btn:active {
+            box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.5),
+                        inset -2px -2px 6px rgba(255, 255, 255, 0.7);
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: #e0e5ec;
+            color: #1f6392;
+        }
+
+        /* сетка заметок */
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+            gap: 2rem;
+        }
+
+        /* карточка заметки (превью) */
+        .note-card {
+            background: #e0e5ec;
+            border-radius: 36px;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 12px 12px 24px rgba(163, 177, 198, 0.5),
+                        -8px -8px 18px rgba(255, 255, 255, 0.6);
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+        }
+
+        .note-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 16px 16px 28px rgba(163, 177, 198, 0.6),
+                        -10px -10px 22px rgba(255, 255, 255, 0.7);
+        }
+
+        .note-preview {
+            font-size: 1rem;
+            line-height: 1.45;
+            color: #1f2c40;
+            word-break: break-word;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .note-date {
+            font-size: 0.7rem;
+            color: #7b8ba3;
+            margin-top: 0.5rem;
+            letter-spacing: 0.3px;
+            border-top: 1px solid rgba(100, 120, 140, 0.2);
+            padding-top: 0.7rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .badge {
+            background: #e0e5ec;
+            padding: 0.2rem 0.7rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            box-shadow: inset 1px 1px 2px rgba(163, 177, 198, 0.3), inset -1px -1px 2px rgba(255,255,255,0.5);
+        }
+
+        .note-actions {
+            display: flex;
+            gap: 0.8rem;
+            margin-top: 0.7rem;
+            justify-content: flex-end;
+        }
+
+        .icon-btn {
+            background: #e0e5ec;
+            border: none;
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 40px;
+            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.4),
+                        -2px -2px 5px rgba(255, 255, 255, 0.6);
+            transition: all 0.1s;
+            color: #2c3e66;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .icon-btn:active {
+            box-shadow: inset 2px 2px 5px rgba(163, 177, 198, 0.5),
+                        inset -1px -1px 3px rgba(255, 255, 255, 0.7);
+            transform: scale(0.96);
+        }
+
+        .delete-btn {
+            color: #b1624d;
+        }
+
+        .enter-btn {
+            color: #2c6e8f;
+        }
+
+        .empty-message {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem;
+            background: #e0e5ec;
+            border-radius: 60px;
+            box-shadow: inset 4px 4px 10px rgba(163, 177, 198, 0.4),
+                        inset -4px -4px 10px rgba(255, 255, 255, 0.6);
+            color: #5b6e8c;
+            font-weight: 500;
+        }
+
+        /* МОДАЛЬНОЕ ОКНО (полноэкранный просмотр заметки) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(224, 229, 236, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-container {
+            background: #e0e5ec;
+            max-width: 650px;
+            width: 90%;
+            border-radius: 56px;
+            padding: 2rem;
+            box-shadow: 24px 24px 48px rgba(163, 177, 198, 0.6),
+                        -18px -18px 36px rgba(255, 255, 255, 0.7);
+            transform: scale(0.96);
+            transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+
+        .modal-overlay.active .modal-container {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 1.8rem;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e2f3f;
+            letter-spacing: -0.2px;
+        }
+
+        .modal-date {
+            font-size: 0.75rem;
+            background: #e0e5ec;
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            box-shadow: inset 1px 1px 3px rgba(163, 177, 198, 0.4), inset -1px -1px 3px rgba(255,255,255,0.6);
+            color: #54708f;
+        }
+
+        .modal-content {
+            margin: 1.5rem 0;
+            font-size: 1.2rem;
+            line-height: 1.55;
+            color: #1f2c42;
+            background: rgba(224, 229, 236, 0.5);
+            padding: 1.2rem;
+            border-radius: 40px;
+            box-shadow: inset 4px 4px 12px rgba(163, 177, 198, 0.4),
+                        inset -2px -2px 8px rgba(255, 255, 255, 0.7);
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .close-modal-btn {
+            background: #e0e5ec;
+            box-shadow: 5px 5px 12px rgba(163, 177, 198, 0.5), -4px -4px 8px rgba(255,255,255,0.7);
+            padding: 0.7rem 1.5rem;
+        }
+
+        footer {
+            margin-top: 3rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #6c7e9e;
+            padding: 1.5rem;
+        }
+
+        @media (max-width: 580px) {
+            body {
+                padding: 1rem;
+            }
+            .neo-header {
+                padding: 1.2rem;
+            }
+            .action-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .modal-container {
+                padding: 1.5rem;
+            }
+            .modal-content {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="neo-header">
+        <h1>📔 Неоморфные заметки</h1>
+        <div class="sub">нажми на заметку, чтобы «зайти» внутрь — полный просмотр с деталями</div>
+    </div>
+
+    <div class="action-bar">
+        <div class="input-group">
+            <input type="text" id="noteInput" class="neo-input" placeholder="Новая заметка... Напишите мысль 📝" autocomplete="off">
+        </div>
+        <button id="addNoteBtn" class="neo-btn btn-primary">➕ Добавить</button>
+    </div>
+
+    <div id="notesContainer" class="notes-grid">
+        <div class="empty-message">✨ Создайте первую заметку ✨</div>
+    </div>
+    <footer>неоморфизм · просмотр заметок на отдельном экране · живые данные</footer>
+</div>
+
+<!-- Модальное окно для просмотра заметки -->
+<div id="noteModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <span class="modal-title">📄 Просмотр заметки</span>
+            <span class="modal-date" id="modalDate"></span>
+        </div>
+        <div class="modal-content" id="modalText">
+            Текст заметки...
+        </div>
+        <div class="modal-actions">
+            <button id="closeModalBtn" class="neo-btn close-modal-btn">Закрыть</button>
+            <button id="editFromModalBtn" class="neo-btn btn-primary">✏️ Редактировать</button>
+            <button id="deleteFromModalBtn" class="neo-btn delete-btn">🗑️ Удалить</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // --- хранилище заметок
+        let notes = [];
+        let currentModalNoteId = null; // id заметки, открытой в модалке
+
+        // DOM элементы
+        const notesContainer = document.getElementById('notesContainer');
+        const noteInputField = document.getElementById('noteInput');
+        const addBtn = document.getElementById('addNoteBtn');
+        const modalOverlay = document.getElementById('noteModal');
+        const modalTextDiv = document.getElementById('modalText');
+        const modalDateSpan = document.getElementById('modalDate');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const editFromModalBtn = document.getElementById('editFromModalBtn');
+        const deleteFromModalBtn = document.getElementById('deleteFromModalBtn');
+
+        // --- вспомогательные функции
+        function formatDate() {
+            const now = new Date();
+            return now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('neomorphic_notes_detailed', JSON.stringify(notes));
+        }
+
+        function loadFromLocalStorage() {
+            const stored = localStorage.getItem('neomorphic_notes_detailed');
+            if (stored) {
+                try {
+                    notes = JSON.parse(stored);
+                    if (!Array.isArray(notes)) notes = [];
+                    notes = notes.filter(n => n && typeof n === 'object').map(n => {
+                        if (!n.id) n.id = Date.now() + Math.random() * 10000;
+                        if (!n.createdAt) n.createdAt = n.updatedAt || formatDate();
+                        if (!n.updatedAt) n.updatedAt = formatDate();
+                        if (!n.text) n.text = '—';
+                        return n;
+                    });
+                } catch(e) { notes = []; }
+            }
+            if (!notes.length) {
+                // стартовые заметки, демонстрирующие возможность "зайти"
+                notes = [
+                    { id: 101, text: '🌟 Неоморфизм — это мягкий объём и эстетика. Нажми на карточку, чтобы "зайти" внутрь и увидеть заметку в полном размере.', createdAt: '15 мар, 12:34', updatedAt: '15 мар, 12:34' },
+                    { id: 102, text: '✍️ В модальном окне можно отредактировать или удалить заметку. Попробуй открыть любую!', createdAt: '15 мар, 13:20', updatedAt: '15 мар, 13:20' },
+                    { id: 103, text: '💾 Все данные сохраняются локально. Добавляй важные идеи, а потом заходи в них для удобного чтения.', createdAt: '15 мар, 14:05', updatedAt: '15 мар, 14:05' }
+                ];
+                saveToLocalStorage();
+            }
+        }
+
+        // вспомогательное экранирование для превью
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) { return c; });
+        }
+
+        // рендер сетки заметок (только превью)
+        function renderNotesGrid() {
+            if (!notesContainer) return;
+            if (notes.length === 0) {
+                notesContainer.innerHTML = `<div class="empty-message">📭 Нет заметок. Создайте новую запись ✨</div>`;
+                return;
+            }
+
+            let html = '';
+            notes.forEach(note => {
+                const safePreview = escapeHtml(note.text.length > 90 ? note.text.slice(0, 90) + '…' : note.text);
+                const displayDate = note.updatedAt || note.createdAt || formatDate();
+                html += `
+                    <div class="note-card" data-id="${note.id}">
+                        <div class="note-preview">${safePreview}</div>
+                        <div class="note-date">
+                            <span>🕒 ${displayDate}</span>
+                            <span class="badge">🔍 нажми</span>
+                        </div>
+                        <div class="note-actions">
+                            <button class="icon-btn enter-btn" data-action="open" data-id="${note.id}">🚪 Зайти</button>
+                            <button class="icon-btn delete-btn" data-action="deleteQuick" data-id="${note.id}">🗑️ Удалить</button>
+                        </div>
+                    </div>
+                `;
+            });
+            notesContainer.innerHTML = html;
+
+            // привязать события клика для кнопок "Зайти" и быстрого удаления, а также клик по карточке
+            document.querySelectorAll('[data-action="open"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.getAttribute('data-id'));
+                    if (!isNaN(id)) openNoteModal(id);
+                });
+            });
+            document.querySelectorAll('[data-action="deleteQuick"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.getAttribute('data-id'));
+                    if (!isNaN(id)) deleteNoteById(id, true);
+                });
+            });
+            // клик по самой карточке (область превью) тоже открывает заметку
+            document.querySelectorAll('.note-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    // не срабатывать если клик на кнопках
+                    if (e.target.closest('[data-action="deleteQuick"]') || e.target.closest('[data-action="open"]')) return;
+                    const id = parseInt(card.getAttribute('data-id'));
+                    if (!isNaN(id)) openNoteModal(id);
+                });
+            });
+        }
+
+        // ОТКРЫТЬ МОДАЛЬНОЕ ОКНО (ЗАЙТИ В ЗАМЕТКУ)
+        function openNoteModal(noteId) {
+            const note = notes.find(n => n.id === noteId);
+            if (!note) return;
+            currentModalNoteId = noteId;
+            // заполняем контент
+            modalTextDiv.innerText = note.text;
+            const dateStr = note.updatedAt ? `Обновлено: ${note.updatedAt}` : `Создано: ${note.createdAt}`;
+            modalDateSpan.innerText = dateStr;
+            // показываем модалку
+            modalOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // закрыть модалку
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+            currentModalNoteId = null;
+        }
+
+        // редактирование из модального окна: открывает простой prompt? но можно сделать удобное редактирование через textarea внутри модалки? 
+        // Сделаем красивое редактирование прямо в модальном окне (динамическая замена на редактируемое поле)
+        function editCurrentNoteFromModal() {
+            if (currentModalNoteId === null) return;
+            const note = notes.find(n => n.id === currentModalNoteId);
+            if (!note) return;
+
+            // Создаем временный текстареа внутри modalTextDiv для плавного редактирования в стиле неоморфизма
+            const currentText = note.text;
+            // заменяем содержимое modalTextDiv на поле ввода
+            const textarea = document.createElement('textarea');
+            textarea.value = currentText;
+            textarea.className = 'neo-input';
+            textarea.style.width = '100%';
+            textarea.style.minHeight = '180px';
+            textarea.style.borderRadius = '32px';
+            textarea.style.padding = '1rem';
+            textarea.style.fontSize = '1rem';
+            textarea.style.fontFamily = 'inherit';
+            textarea.style.resize = 'vertical';
+            textarea.style.background = '#e0e5ec';
+            textarea.style.boxShadow = 'inset 5px 5px 12px rgba(163, 177, 198, 0.5), inset -5px -5px 12px rgba(255, 255, 255, 0.7)';
+            textarea.style.border = 'none';
+            textarea.style.outline = 'none';
+            
+            modalTextDiv.innerHTML = '';
+            modalTextDiv.appendChild(textarea);
+            textarea.focus();
+            
+            // меняем кнопку "Редактировать" на "Сохранить", а "Удалить" на "Отмена"
+            const oldEditBtnText = editFromModalBtn.innerHTML;
+            editFromModalBtn.innerHTML = '💾 Сохранить';
+            const oldDeleteText = deleteFromModalBtn.innerHTML;
+            deleteFromModalBtn.innerHTML = '↩️ Отмена';
+            
+            // временные обработчики (один раз)
+            const saveHandler = () => {
+                const newText = textarea.value.trim();
+                if (newText === '') {
+                    // если пусто - предупредим
+                    textarea.style.boxShadow = 'inset 5px 5px 12px rgba(200, 70, 50, 0.5), inset -3px -3px 8px rgba(255,240,230,0.8)';
+                    setTimeout(() => { textarea.style.boxShadow = ''; }, 400);
+                    return;
+                }
+                // сохраняем изменения
+                note.text = newText;
+                note.updatedAt = formatDate();
+                saveToLocalStorage();
+                // обновляем модалку и сетку
+                renderNotesGrid();
+                // восстановить отображение текста в модалке
+                modalTextDiv.innerText = note.text;
+                modalDateSpan.innerText = `Обновлено: ${note.updatedAt}`;
+                // вернуть кнопки в исходное состояние
+                editFromModalBtn.innerHTML = '✏️ Редактировать';
+                deleteFromModalBtn.innerHTML = '🗑️ Удалить';
+                // удалить временные обработчики
+                editFromModalBtn.removeEventListener('click', saveHandler);
+                deleteFromModalBtn.removeEventListener('click', cancelHandler);
+                // перепривязать исходные обработчики
+                attachModalButtonsEvents();
+            };
+            
+            const cancelHandler = () => {
+                // отмена редактирования
+                modalTextDiv.innerText = note.text;
+                editFromModalBtn.innerHTML = '✏️ Редактировать';
+                deleteFromModalBtn.innerHTML = '🗑️ Удалить';
+                editFromModalBtn.removeEventListener('click', saveHandler);
+                deleteFromModalBtn.removeEventListener('click', cancelHandler);
+                attachModalButtonsEvents();
+            };
+            
+            // временно заменяем обработчики
+            editFromModalBtn.removeEventListener('click', editFromModalHandler);
+            deleteFromModalBtn.removeEventListener('click', deleteFromModalHandler);
+            editFromModalBtn.addEventListener('click', saveHandler);
+            deleteFromModalBtn.addEventListener('click', cancelHandler);
+        }
+        
+        // отдельные функции для стандартных действий модалки
+        function deleteCurrentNoteFromModal() {
+            if (currentModalNoteId === null) return;
+            deleteNoteById(currentModalNoteId, true);
+            closeModal();
+        }
+        
+        function deleteNoteById(id, reRender = true) {
+            notes = notes.filter(n => n.id !== id);
+            saveToLocalStorage();
+            if (reRender) renderNotesGrid();
+            if (currentModalNoteId === id) closeModal();
+        }
+        
+        // Стандартные обработчики для кнопок модалки (после инициализации или восстановления)
+        let editFromModalHandler, deleteFromModalHandler;
+        
+        function attachModalButtonsEvents() {
+            if (editFromModalHandler) editFromModalBtn.removeEventListener('click', editFromModalHandler);
+            if (deleteFromModalHandler) deleteFromModalBtn.removeEventListener('click', deleteFromModalHandler);
+            
+            editFromModalHandler = () => editCurrentNoteFromModal();
+            deleteFromModalHandler = () => deleteCurrentNoteFromModal();
+            
+            editFromModalBtn.addEventListener('click', editFromModalHandler);
+            deleteFromModalBtn.addEventListener('click', deleteFromModalHandler);
+        }
+        
+        // Добавление новой заметки
+        function addNewNote() {
+            let rawText = noteInputField.value.trim();
+            if (rawText === "") {
+                noteInputField.style.boxShadow = "inset 5px 5px 12px rgba(200, 80, 60, 0.3), inset -3px -3px 8px rgba(255,255,240,0.7)";
+                setTimeout(() => { noteInputField.style.boxShadow = ""; }, 350);
+                return;
+            }
+            const newId = Date.now() + Math.floor(Math.random() * 100000);
+            const currentDate = formatDate();
+            const newNote = {
+                id: newId,
+                text: rawText,
+                createdAt: currentDate,
+                updatedAt: currentDate
+            };
+            notes.unshift(newNote);
+            saveToLocalStorage();
+            renderNotesGrid();
+            noteInputField.value = "";
+            noteInputField.focus();
+        }
+        
+        // инициализация и закрытие модалки по overlay/кнопке
+        function init() {
+            loadFromLocalStorage();
+            renderNotesGrid();
+            
+            addBtn.addEventListener('click', addNewNote);
+            noteInputField.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addNewNote();
+                }
+            });
+            
+            closeModalBtn.addEventListener('click', closeModal);
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) closeModal();
+            });
+            // начальная привязка обработчиков модальных кнопок
+            attachModalButtonsEvents();
+            // обработка escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modalOverlay.classList.contains('active')) {
+                    closeModal();
+                }
+            });
+        }
+        
+        init();
+    })();
+</script>
+</body>
+</html>
